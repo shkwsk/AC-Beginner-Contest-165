@@ -1,88 +1,47 @@
+import itertools
 import math
 
-def dijkstra(s,n,w,cost):
-    #始点sから各頂点への最短距離
-    #n:頂点数,　w:辺の数, cost[u][v] : 辺uvのコスト(存在しないときはinf)
-    d = [float("inf")] * n
-    used = [False] * n
-    d[s] = 0
-    
-    while True:
-        v = -1
-        #まだ使われてない頂点の中から最小の距離のものを探す
-        for i in range(n):
-            if (not used[i]) and (v == -1):
-               v = i
-            elif (not used[i]) and d[i] < d[v]:
-                v = i
-        if v == -1:
-               break
-        used[v] = True
-               
-        for j in range(n):
-               d[j] = min(d[j],d[v]+cost[v][j])
-    return d
+def dfs(vum,v,depth,max_depth,candidate,dupcombi):
+    if depth == max_depth:
+        dupcombi.append(candidate.copy())
+    else:
+        for u in vum[v]:
+            candidate[depth] = u
+            candidate, dupcombi = dfs(vum,u,depth+1,max_depth,candidate,dupcombi)
+    return candidate, dupcombi
 
 def main():
     N,M,Q = [int(x) for x in input().split()]
-    m = {}
+    m = []
     for i in range(Q):
         a,b,c,d = [int(x) for x in input().split()]
-        if d == 0:
-            continue
-        m.update({d: (a,b,c)})
+        m.append((a,b,c,d))
 
-    p = 0
-    A = [0]*N
-    for d,(a,b,c) in sorted(m.items(), reverse=True):
-        # print(d,a,b,c)
-        if A[b-1] == 0 and A[a-1] == 0:
-            A[b-1] = M
-            A[a-1] = M - c
-            p += d
-            # print('1',d)
-            continue
-        if A[b-1] == 0:
-            A[b-1] = A[a-1] + c
-            p += d
-            # print('2',d)
-            continue
-        if A[a-1] == 0:
-            A[a-1] = A[b-1] - c
-            p += d
-            # print('3',d)
-            continue
-        if A[b-1] - A[a-1] == c:
-            p += d
-            # print('4',d)
-            continue
-    p2 = 0
-    A = [0]*N
-    for d,(a,b,c) in sorted(m.items()):
-        if A[b-1] == 0 and A[a-1] == 0:
-            A[b-1] = M
-            A[a-1] = M - c
-            p2 += d
-            # print('1',d)
-            continue
-        if A[b-1] == 0:
-            A[b-1] = A[a-1] + c
-            p2 += d
-            # print('2',d)
-            continue
-        if A[a-1] == 0:
-            A[a-1] = A[b-1] - c
-            p2 += d
-            # print('3',d)
-            continue
-        if A[b-1] - A[a-1] == c:
-            p2 += d
-            # print('4',d)
-            continue
-    if p >= p2:
-        print(p)
-    else:
-        print(p2)
+    # 数列列挙
+    vum = {}
+    for i in range(1,M+1):
+        ul = []
+        for j in range(i,M+1):
+            ul.append(j)
+        vum.update({i:ul})
+    dupcombi = []
+    candidate = [0]*N
+    _, candA = dfs(vum,1,0,N,candidate,dupcombi)
+    # print(len(list(itertools.product(range(1,M+1),repeat=N)))) // 重複あり順列
+    # print(len(list(itertools.combinations_with_replacement(range(1,M+1),N)))) // 重複あり組み合わせ
+    # print(len(candA)) // 重複あり組み合わせ (自作)
+
+    scoreA = {}
+    for cand in candA:
+        score = 0
+        for a,b,c,d in m:
+            # print(a,b,c,d)
+            if cand[b-1] - cand[a-1] == c:
+                # print(cand[b-1],cand[a-1])
+                score += d
+        # print(cand,score)
+        scoreA.update({score:cand})
+    print(sorted(scoreA.items(), reverse=True)[0][0])
 
 if __name__ == '__main__':
     main()
